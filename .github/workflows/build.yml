@@ -12,12 +12,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extraire DualSound-projet-android.zip
+      - name: Extraire VoiceTrollApp.zip
         run: |
-          unzip -o DualSound-projet-android.zip -d extracted
-          # Le zip peut contenir les fichiers directement, ou un seul dossier parent.
-          # On détecte automatiquement le vrai dossier racine du projet
-          # (celui qui contient settings.gradle.kts) pour éviter tout chemin cassé ensuite.
+          unzip -o VoiceTrollApp.zip -d extracted
           ROOT=$(find extracted -maxdepth 3 -name "settings.gradle.kts" -exec dirname {} \; | head -n 1)
           if [ -z "$ROOT" ]; then
             echo "❌ settings.gradle.kts introuvable dans le zip"
