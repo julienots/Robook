@@ -1,0 +1,53 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extraire DualSound-projet-android.zip
+        run: |
+          unzip -o DualSound-projet-android.zip -d extracted
+          # Le zip peut contenir les fichiers directement, ou un seul dossier parent.
+          # On détecte automatiquement le vrai dossier racine du projet
+          # (celui qui contient settings.gradle.kts) pour éviter tout chemin cassé ensuite.
+          ROOT=$(find extracted -maxdepth 3 -name "settings.gradle.kts" -exec dirname {} \; | head -n 1)
+          if [ -z "$ROOT" ]; then
+            echo "❌ settings.gradle.kts introuvable dans le zip"
+            exit 1
+          fi
+          echo "Racine du projet détectée : $ROOT"
+          cp -r "$ROOT"/. .
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
+
+      - name: Generate Gradle wrapper
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DualSound-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
